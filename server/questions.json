@@ -1,0 +1,143 @@
+
+[
+  {
+    "category": "淨零排放專有名詞",
+    "question_text": "氣候變遷調適(Adaptation)是指？",
+    "options": [
+      "降低二氧化碳排放",
+      "增加綠色植被面積",
+      "人類與自然系統回應氣候變遷風險的調整過程",
+      "減少工業化進程"
+    ],
+    "correct_answer": "C",
+    "explanation": "氣候變遷調適是指人類與自然系統回應氣候變遷風險的調整過程。",
+    "law_reference": "氣候變遷專有名詞手冊",
+    "difficulty": "易"
+  },
+  {
+    "category": "淨零排放專有名詞",
+    "question_text": "產品碳足跡(CFP)是指？",
+    "options": [
+      "單一產品的製造成本",
+      "產品從生產到銷毀的總能耗",
+      "產品的市場價值",
+      "產品系統中溫室氣體排放與移除的總和"
+    ],
+    "correct_answer": "D",
+    "explanation": "產品碳足跡是指產品系統中溫室氣體排放與移除的總和。",
+    "law_reference": "ISO 14067",
+    "difficulty": "易"
+  },
+  {
+    "category": "國際重要倡議",
+    "question_text": "CDP成立於哪一年？",
+    "options": [
+      "1995年",
+      "2000年",
+      "2005年",
+      "2010年"
+    ],
+    "correct_answer": "B",
+    "explanation": "CDP (國際碳揭露計畫)於2000年成立，最初命名為「碳揭露計畫」。",
+    "law_reference": "CDP 碳揭露計畫",
+    "difficulty": "易"
+  },
+  {
+    "category": "國際重要倡議",
+    "question_text": "關於 RE100成員的報告要求，下列描述哪一項是正確的？",
+    "options": [
+      "只需在加入時報告一次",
+      "每十年報告一次進展",
+      "不需要報告進展",
+      "需要每年報告進展"
+    ],
+    "correct_answer": "D",
+    "explanation": "根據RE100一般規範，成員需要每年報告進展。",
+    "law_reference": "RE100",
+    "difficulty": "中"
+  },
+  {
+    "category": "氣候變遷風險評估",
+    "question_text": "TCFD提出的「轉型風險」主要與以下哪一項相關？",
+    "options": [
+      "氣候災害的直接影響",
+      "極端天氣的發生頻率",
+      "低碳轉型對企業的影響",
+      "長期的資產壽命管理"
+    ],
+    "correct_answer": "C",
+    "explanation": "轉型風險涉及低碳轉型過程中的政策法規、技術、市場和聲譽等衝擊。",
+    "law_reference": "TCFD 氣候相關財務揭露建議",
+    "difficulty": "中"
+  },
+  {
+    "category": "國際碳關稅",
+    "question_text": "CBAM 規定，過渡期後進口商必須在每年的哪一天前繳交足夠的 CBAM 憑證？",
+    "options": [
+      "1月 1日",
+      "3月 31日",
+      "5月 31日",
+      "12月 31日"
+    ],
+    "correct_answer": "C",
+    "explanation": "進口商須於每年 5 月 31 日前向主管機關繳交足以抵銷前一年進口產品總碳含量之 CBAM 憑證。",
+    "law_reference": "歐盟碳邊境調整機制 (CBAM)",
+    "difficulty": "中"
+  },
+  {
+    "category": "溫室氣體盤查",
+    "question_text": "公司使用含碳量 5%的焊條進行熔接作業，共使用 500公斤焊條。依質量平衡法計算，請問此作業共排放多少公斤的二氧化碳？(假設所有碳均完全轉化為二氧化碳，C原子量 12，O原子量 16)",
+    "options": [
+      "91.6667公斤",
+      "100.0000公斤",
+      "183.3333公斤",
+      "19.6667公斤"
+    ],
+    "correct_answer": "A",
+    "explanation": "焊條中含碳量為 500kg × 5% = 25kg。依據化學反應式，每1kg的碳燃燒會產生44/12 kg的CO2，故排放量為 25kg × (44/12) = 91.6667 kg。",
+    "law_reference": "ISO 14064-1",
+    "difficulty": "難"
+  },
+  {
+    "category": "產品碳足跡",
+    "question_text": "產品碳足盤查過程中，針對特定的產品/服務進行環境宣告之生命週期範疇界定的作業程序文件，稱之為何？",
+    "options": [
+      "生命週期評估(LCA)",
+      "物質安全資料表(MSDS)",
+      "產品類別規則(PCR)",
+      "物質流成本分析(MFCA)"
+    ],
+    "correct_answer": "C",
+    "explanation": "產品類別規則(PCR)旨在使相同功能產品就其環境衝擊量化後之環境宣告，具有一致的比較基礎。",
+    "law_reference": "ISO 14067",
+    "difficulty": "中"
+  },
+  {
+    "category": "生命週期評估",
+    "question_text": "衝擊評估階段屬於生命週期評估作業 LCA的第幾階段？",
+    "options": [
+      "第一階段",
+      "第二階段",
+      "第三階段",
+      "第四階段"
+    ],
+    "correct_answer": "C",
+    "explanation": "衝擊評估階段屬於生命週期評估作業 LCA的第三階段。",
+    "law_reference": "ISO 14040",
+    "difficulty": "易"
+  },
+  {
+    "category": "產品碳足跡",
+    "question_text": "在組織邊界外所獲得的數據稱之為？",
+    "options": [
+      "初級數據",
+      "次級數據",
+      "場址特定數據",
+      "網路資料庫數據"
+    ],
+    "correct_answer": "B",
+    "explanation": "在產品碳足跡盤查中，非初級數據者（在組織邊界外所獲得的數據）皆為次級數據。",
+    "law_reference": "ISO 14067",
+    "difficulty": "易"
+  }
+]

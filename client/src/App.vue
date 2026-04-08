@@ -5,6 +5,7 @@ import axios from 'axios'
 import { showToast, showLoadingToast, closeToast } from 'vant'
 import { Radar } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, PointElement, LineElement, RadialLinearScale, Filler } from 'chart.js';
+import { watch } from 'vue';
 
 // --- 響應式狀態 (State) ---
 const quizList = ref([])      // 題目清單
@@ -13,6 +14,18 @@ const userAnswers = ref({})    // 紀錄答案 { 題目ID: "A" }
 const loading = ref(true)
 
 const API_BASE = "http://localhost:3000/api"
+const token = localStorage.getItem('token'); // 假設你沿用打卡系統的存儲方式
+
+
+watch(userAnswers, (newVal) => {
+  localStorage.setItem('temp_answers', JSON.stringify(newVal));
+}, { deep: true });
+
+watch(currentIndex, (newVal) => {
+  localStorage.setItem('temp_index', newVal);
+});
+
+
 
 // --- 動作 (Actions) ---
 const fetchQuiz = async () => {
@@ -34,7 +47,15 @@ const progress = computed(() =>
   quizList.value.length ? Math.round(((currentIndex.value + 1) / quizList.value.length) * 100) : 0
 )
 
-onMounted(fetchQuiz)
+onMounted(async () => {
+  await fetchQuiz();
+  
+  const savedAnswers = localStorage.getItem('temp_answers');
+  const savedIndex = localStorage.getItem('temp_index');
+  
+  if (savedAnswers) userAnswers.value = JSON.parse(savedAnswers);
+  if (savedIndex) currentIndex.value = parseInt(savedIndex);
+});
 
 // 換題控制
 const next = () => { if (currentIndex.value < quizList.value.length - 1) currentIndex.value++ }
@@ -50,11 +71,35 @@ const resultData = ref(null);   // 存放後端回傳的評分結果
 const submitQuiz = async () => {
   showLoadingToast({ message: '評分分析中...', forbidClick: true });
   try {
-    const res = await axios.post(`${API_BASE}/quiz/submit`, { userAnswers: userAnswers.value });
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      showToast('找不到登入資訊，請重新登入');
+      return;
+    }
+
+    // 3. 正式發送請求 (這就是你問的那段代碼)
+    const res = await axios.post(`${API_BASE}/quiz/submit`,
+      { userAnswers: userAnswers.value }, // Body：傳送答案
+      {
+        headers: {
+          // Header：傳送通行證，注意 Bearer 後面有一個空格
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
     resultData.value = res.data;
     isFinished.value = true;
-  } catch (err) {
-    showToast('提交失敗');
+  showSuccessToast('測驗完成！');
+
+  } catch (error) {
+    // 6. 錯誤處理 (例如 Token 過期)
+    if (error.response && error.response.status === 401) {
+      showFailToast('認證失效，請重新登入打卡系統');
+    } else {
+      showFailToast('提交失敗，請檢查網路連線');
+    }
+    console.error('Submit Error:', error);
   } finally {
     closeToast();
   }

@@ -2,10 +2,34 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your_fallback_secret'; // 記得在 .env 設定
+
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+
+
+// 這是你的門禁警衛函數
+const authenticateToken = (req, res, next) => {
+  // 1. 從 Header 取得通行證 (Bearer TOKEN)
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; 
+
+  // 2. 如果連通行證都沒有，直接攔截
+  if (!token) return res.status(401).json({ message: '請先登入系統' });
+
+  // 3. 驗證通行證是否真偽或過期
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ message: '通行證無效或已過期' });
+    
+    // 4. 通過驗證！將解密後的用戶資料（如 username）塞進 req 中給後面的 API 使用
+    req.user = user; 
+    next(); // 准予通行，執行下一個動作
+  });
+};
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -24,9 +48,9 @@ app.get('/api/quiz/random', async (req, res) => {
   }
 });
 
-app.post('/api/quiz/submit', async (req, res) => {
-  const { userAnswers } = req.body; // 格式: { "1": "A", "2": "C" }
-  const ids = Object.keys(userAnswers);
+app.post('/api/quiz/submit', authenticateToken, async (req, res) => {
+  const { userAnswers } = req.body;
+  const username = req.user.username; // 從 JWT 取得使用者
 
   try {
     // 1. 從資料庫抓出這些題目的正確答案與分類
@@ -54,10 +78,14 @@ app.post('/api/quiz/submit', async (req, res) => {
         explanation: q.explanation
       });
     });
+await pool.query(
+      'INSERT INTO quiz_history (username, score, analysis) VALUES ($1, $2, $3)',
+      [username, score, JSON.stringify(analysis)]
+    );
 
     res.json({ score, analysis, details });
   } catch (err) {
-    res.status(500).json({ message: '評分失敗' });
+    res.status(500).json({ message: '紀錄儲存失敗' });
   }
 });
 

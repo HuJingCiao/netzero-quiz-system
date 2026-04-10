@@ -31,6 +31,7 @@ const API_BASE = window.location.hostname === 'localhost'
   ? "http://localhost:3000/api" 
   : "https://netzero-quiz-system.onrender.com/api";
 
+const STORAGE_KEY = "quiz_token";
 // --- 監聽器：持久化作答進度 ---
 watch(userAnswers, (newVal) => {
   localStorage.setItem('temp_answers', JSON.stringify(newVal))

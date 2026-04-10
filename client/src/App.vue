@@ -27,8 +27,9 @@ const userAnswers = ref({})
 const resultData = ref(null)
 const activeNames = ref(['0']) // 👈 補齊這個變數
 
-const API_BASE = "http://localhost:3000/api"
-const STORAGE_KEY = "quiz_token" // 👈 統一 Key 名稱
+const API_BASE = window.location.hostname === 'localhost' 
+  ? "http://localhost:3000/api" 
+  : "https://netzero-quiz-system.onrender.com/api";
 
 // --- 監聽器：持久化作答進度 ---
 watch(userAnswers, (newVal) => {

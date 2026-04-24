@@ -61,64 +61,74 @@ app.post('/api/login', async (req, res) => {
 
 // [Protected] 取得隨機題目
 app.get('/api/quiz/random', async (req, res) => {
+  const { subject } = req.query; // 接收 ?subject=1 或 2
   try {
     const result = await pool.query(
-      'SELECT id, category, question_text, options, law_reference FROM quiz_questions ORDER BY RANDOM() LIMIT 10'
+      'SELECT id, category, chapter, question_text, options FROM quiz_questions WHERE subject_id = $1 ORDER BY RANDOM() LIMIT 10',
+      [subject]
     );
     res.json(result.rows);
-  } catch (err) {
-    res.status(500).send('伺服器錯誤');
-  }
+  } catch (err) { res.status(500).send('伺服器錯誤'); }
 });
 
 // [Protected] 提交答案並評分
 
 app.post('/api/quiz/submit', authenticateToken, async (req, res) => {
-  try {
-    const { userAnswers } = req.body; 
-    const ids = Object.keys(userAnswers); 
+    const { userAnswers } = req.body;
+    const userId = req.user.id;
+    const username = req.user.username; // 從 JWT 取得名稱
 
-    // 一次性取出所有相關題目，避免迴圈多次查詢資料庫
-    const result = await pool.query(
-      'SELECT id, category, correct_answer, explanation FROM quiz_questions WHERE id = ANY($1)', 
-      [ids]
-    );
+    try {
+        // 1. 取得這批題目的正確答案與章節
+        const questionIds = Object.keys(userAnswers);
+        const { rows: questions } = await pool.query(
+            'SELECT id, subject_id, chapter, correct_answer FROM quiz_questions WHERE id = ANY($1)',
+            [questionIds]
+        );
 
-    const username = req.user.username;
-    let score = 0;
-    const analysis = {};
-    const details = [];
+        const subjectId = questions[0]?.subject_id || 1;
+        let correctCount = 0;
+        const sessionResults = [];
 
-    result.rows.forEach(q => {
-      const isCorrect = userAnswers[q.id] === q.correct_answer;
-      if (isCorrect) score += 10;
+        // 2. 逐題比對並準備更新統計
+        for (const q of questions) {
+            const isCorrect = userAnswers[q.id] === q.correct_answer;
+            if (isCorrect) correctCount++;
 
-      // 累加分類分析數據
-      if (!analysis[q.category]) analysis[q.category] = { total: 0, correct: 0 };
-      analysis[q.category].total++;
-      if (isCorrect) analysis[q.category].correct++;
+            // 更新或插入累積數據 (Upsert 語法)
+            await pool.query(`
+                INSERT INTO user_stats (user_id, subject_id, chapter, total_answered, total_correct)
+                VALUES ($1, $2, $3, 1, $4)
+                ON CONFLICT (user_id, subject_id, chapter)
+                DO UPDATE SET 
+                    total_answered = user_stats.total_answered + 1,
+                    total_correct = user_stats.total_correct + $4
+            `, [userId, subjectId, q.chapter, isCorrect ? 1 : 0]);
+        }
 
-      details.push({
-        id: q.id,
-        isCorrect,
-        userAnswer: userAnswers[q.id],
-        correctAnswer: q.correct_answer,
-        explanation: q.explanation
-      });
-    });
+        // 3. 撈出該考科「所有章節」的累積正確率
+        const { rows: cumulativeStats } = await pool.query(
+            'SELECT chapter, total_answered, total_correct FROM user_stats WHERE user_id = $1 AND subject_id = $2',
+            [userId, subjectId]
+        );
 
-    // 存入測驗歷史紀錄
-    await pool.query(
-      'INSERT INTO quiz_history (username, score, analysis) VALUES ($1, $2, $3)',
-      [username, score, JSON.stringify(analysis)]
-    );
+        // 格式化雷達圖數據
+        const analysis = cumulativeStats.map(row => ({
+            chapter: row.chapter,
+            // 計算累積正確率：(總答對 / 總答題) * 100
+            accuracy: Math.round((row.total_correct / row.total_answered) * 100)
+        }));
 
-    res.json({ score, analysis, details });
+        res.json({
+            username: username, // 功能 1: 回傳名稱
+            score: Math.round((correctCount / questions.length) * 100),
+            analysis: analysis // 功能 2: 回傳累積正確率
+        });
 
-  } catch (err) {
-    console.error("❌ 提交路由出錯:", err);
-    res.status(500).json({ message: '評分失敗', detail: err.message });
-  }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('結算失敗');
+    }
 });
 
 // --- 5. 啟動伺服器 ---

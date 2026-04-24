@@ -7,41 +7,44 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const importData = async () => {
+async function importData() {
   try {
-    const rawData = fs.readFileSync('./questions.json', 'utf8');
-    const questions = JSON.parse(rawData);
+    const data = JSON.parse(fs.readFileSync('./questions.json', 'utf8'));
+    console.log(`📦 偵測到 ${data.length} 題，開始處理...`);
 
-    console.log(`🚀 偵測到 ${questions.length} 題，準備匯入...`);
+    for (const q of data) {
+      // 關鍵修復點：直接檢查並轉換 options
+      // 如果 options 已經是物件，就轉字串；如果不是，給予空物件防止崩潰
+      const optionsString = typeof q.options === 'object' 
+        ? JSON.stringify(q.options) 
+        : JSON.stringify({});
 
-    for (const q of questions) {
-      // 1. 格式化選項：將 ["A", "B", "C", "D"] 轉成 [{label: 'A', text: '...'}, ...]
-      const formattedOptions = q.options.map((opt, index) => ({
-        label: String.fromCharCode(65 + index), // 產生 A, B, C, D
-        text: opt
-      }));
+      const query = `
+        INSERT INTO quiz_questions (
+          subject_id, chapter, category, question_text, options, correct_answer, explanation
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `;
+      
+      const values = [
+        q.subject_id || 1,        // 若沒填則預設為考科一
+        q.chapter || '未分類',     // 若沒填則預設
+        q.category || '一般',
+        q.question_text,
+        optionsString,            // 這裡直接用我們處理好的字串
+        q.correct_answer,
+        q.explanation
+      ];
 
-      // 2. 執行插入 (注意這裡改用 q.question_text)
-      await pool.query(
-        `INSERT INTO quiz_questions (category, question_text, options, correct_answer, explanation, law_reference, difficulty) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          q.category, 
-          q.question_text,        // 👈 修正點：對應 AI 的欄位名
-          JSON.stringify(formattedOptions), 
-          q.correct_answer,      // 👈 修正點：對應 AI 的欄位名
-          q.explanation, 
-          q.law_reference,
-          q.difficulty || '中'
-        ]
-      );
+      await pool.query(query, values);
     }
-    console.log('✅ 恭喜！題庫已成功與資料庫同步。');
-    process.exit();
+
+    console.log('✅ 匯入成功！您可以去資料庫查看數據了。');
   } catch (err) {
     console.error('❌ 匯入失敗，錯誤細節：', err.message);
-    process.exit(1);
+  } finally {
+    await pool.end();
   }
-};
+}
 
 importData();
